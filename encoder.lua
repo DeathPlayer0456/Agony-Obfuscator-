@@ -1,6 +1,5 @@
 local Encoder = {}
 
--- Generate random key
 function Encoder.generateKey(length)
     local key = {}
     for i = 1, length do
@@ -9,7 +8,6 @@ function Encoder.generateKey(length)
     return key
 end
 
--- Multi-layer XOR encryption
 function Encoder.multiLayerXOR(data, keys)
     local result = data
     for _, key in ipairs(keys) do
@@ -24,7 +22,6 @@ function Encoder.multiLayerXOR(data, keys)
     return result
 end
 
--- Custom base encoding (not standard base64)
 function Encoder.customBaseEncode(str, alphabet)
     alphabet = alphabet or "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz!@"
     local result = {}
@@ -50,7 +47,6 @@ function Encoder.customBaseEncode(str, alphabet)
     return table.concat(result)
 end
 
--- Shuffle array indices
 function Encoder.shuffleArray(arr, seed)
     math.randomseed(seed)
     local shuffled = {}
@@ -72,7 +68,6 @@ function Encoder.shuffleArray(arr, seed)
     return shuffled, indices
 end
 
--- Generate complex decoder
 function Encoder.generateComplexDecoder(keys, alphabet, shuffleSeed, layerCount)
     local keyStrings = {}
     for i, key in ipairs(keys) do
@@ -89,10 +84,9 @@ local function decode(data)
     local keys = {%s}
     local seed = %d
     
-    -- Custom base decode
     local function customBaseDecode(str)
         local result = {}
-        str = str:gsub('[^' .. alphabet:gsub('[%^%$%(%)%%%.%[%]%*%+%-%?]','%%%1') .. '=]', '')
+        str = str:gsub('[^' .. alphabet:gsub('[%%^%%$%%(%%)?%%.%%[%%]%%*%%+%%-%%?]','%%%%%%1') .. '=]', '')
         
         for i = 1, #str, 4 do
             local a = alphabet:find(str:sub(i, i)) - 1
@@ -114,7 +108,6 @@ local function decode(data)
         return table.concat(result)
     end
     
-    -- Multi-layer XOR decrypt
     local function multiLayerXORDecrypt(encrypted, keyList)
         local result = encrypted
         for i = #keyList, 1, -1 do
@@ -130,7 +123,6 @@ local function decode(data)
         return result
     end
     
-    -- Unshuffle array
     local function unshuffleArray(arr, originalSeed)
         math.randomseed(originalSeed)
         local indices = {}
@@ -151,7 +143,6 @@ local function decode(data)
         return unshuffled
     end
     
-    -- Decode pipeline
     data = customBaseDecode(data)
     data = multiLayerXORDecrypt(data, keys)
     
@@ -170,37 +161,29 @@ end
     return decoder
 end
 
--- Encode with all layers
 function Encoder.advancedEncode(code, options)
     options = options or {}
     local layerCount = options.layers or 3
     local alphabet = options.alphabet or "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz!@"
     local shuffleSeed = options.seed or os.time()
     
-    -- Split into chunks
     local chunkSize = math.ceil(#code / 10)
     local chunks = {}
     for i = 1, #code, chunkSize do
         table.insert(chunks, code:sub(i, i + chunkSize - 1))
     end
     
-    -- Shuffle chunks
     local shuffled, indices = Encoder.shuffleArray(chunks, shuffleSeed)
     code = table.concat(shuffled, "|")
     
-    -- Generate encryption keys
     local keys = {}
     for i = 1, layerCount do
         table.insert(keys, Encoder.generateKey(16))
     end
     
-    -- Multi-layer XOR
     code = Encoder.multiLayerXOR(code, keys)
-    
-    -- Custom base encode
     code = Encoder.customBaseEncode(code, alphabet)
     
-    -- Generate decoder
     local decoder = Encoder.generateComplexDecoder(keys, alphabet, shuffleSeed, layerCount)
     
     return code, decoder
